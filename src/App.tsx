@@ -3,20 +3,33 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useMemo } from 'react';
-import { Copy, Check, AlertCircle, ExternalLink, ShieldCheck, Key, Mail, Lock, Info, ShieldAlert } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { MUST_READ_CONTENT } from './constants/mustRead';
+import { useState, useMemo } from "react";
+import {
+  Copy,
+  Check,
+  AlertCircle,
+  ExternalLink,
+  ShieldCheck,
+  Key,
+  Mail,
+  Lock,
+  Info,
+  ShieldAlert,
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { MUST_READ_CONTENT } from "./constants/mustRead";
 
 export default function App() {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [copied, setCopied] = useState(false);
+  const [mustReadCopied, setMustReadCopied] = useState(false);
 
   const parsedData = useMemo(() => {
     if (!input.trim()) return null;
-    const parts = input.split('----');
-    if (parts.length < 4) return { error: '输入格式不正确，请检查是否包含 3 个 "----"' };
-    
+    const parts = input.split("----");
+    if (parts.length < 4)
+      return { error: '输入格式不正确，请检查是否包含 3 个 "----"' };
+
     return {
       account: parts[0].trim(),
       password: parts[1].trim(),
@@ -26,8 +39,8 @@ export default function App() {
   }, [input]);
 
   const formattedText = useMemo(() => {
-    if (!parsedData || 'error' in parsedData) return '';
-    
+    if (!parsedData || "error" in parsedData) return "";
+
     return `账号信息：
 账号：${parsedData.account}
 密码：${parsedData.password}
@@ -47,15 +60,33 @@ export default function App() {
 进入 https://gemini.google.com ，开始享用`;
   }, [parsedData]);
 
-  const handleCopy = async () => {
-    if (!formattedText) return;
+  const copyButtonClassName = (isCopied: boolean) =>
+    `flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg ${
+      isCopied
+        ? "bg-emerald-500 text-white shadow-emerald-200"
+        : "bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700"
+    }`;
+
+  const copyText = async (
+    text: string,
+    setCopiedState: (value: boolean) => void,
+  ) => {
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(formattedText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(text);
+      setCopiedState(true);
+      window.setTimeout(() => setCopiedState(false), 2000);
     } catch (err) {
-      console.error('Failed to copy text: ', err);
+      console.error("Failed to copy text: ", err);
     }
+  };
+
+  const handleCopy = async () => {
+    await copyText(formattedText, setCopied);
+  };
+
+  const handleMustReadCopy = async () => {
+    await copyText(MUST_READ_CONTENT, setMustReadCopied);
   };
 
   return (
@@ -63,14 +94,14 @@ export default function App() {
       <div className="max-w-6xl w-full">
         {/* Header */}
         <header className="mb-8 text-center">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 mb-2"
           >
             Gemini Account Formatter
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -81,13 +112,12 @@ export default function App() {
         </header>
 
         {/* Main Card */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-indigo-100/50 border border-white overflow-hidden"
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
-            
             {/* Left Column: Input */}
             <div className="p-6 md:p-8 space-y-6">
               <div className="flex items-center gap-2 mb-2">
@@ -96,7 +126,7 @@ export default function App() {
                 </div>
                 <h2 className="text-xl font-semibold">原始数据输入</h2>
               </div>
-              
+
               <div className="space-y-4">
                 <label className="block text-sm font-medium text-slate-500">
                   粘贴格式：邮箱----密码----辅助邮箱----2fa密钥
@@ -104,16 +134,17 @@ export default function App() {
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="GuenetTran922@gmail.com----njgz8a6ndc----cameronwillisbv1pf@hotmail.com----xzfjzt3jqvetv74msqjvmdisiz7b32qr"
+                  placeholder="xxxxxxx@gmail.com----xxxxxxx----xxxxxx@hotmail.com----xxxxxxxxxxxxxxxxxxx"
                   className="w-full h-64 p-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white transition-all outline-none resize-none font-mono text-sm shadow-inner"
                 />
-                
+
                 <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
                   <h3 className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2 flex items-center gap-1">
                     <ShieldCheck size={14} /> 提示
                   </h3>
                   <p className="text-xs text-indigo-700 leading-relaxed">
-                    系统会自动识别 "----" 分隔符并提取关键字段。请确保粘贴的信息完整。
+                    系统会自动识别 "----"
+                    分隔符并提取关键字段。请确保粘贴的信息完整。
                   </p>
                 </div>
               </div>
@@ -128,20 +159,16 @@ export default function App() {
                   </div>
                   <h2 className="text-xl font-semibold">生成结果预览</h2>
                 </div>
-                
-                {parsedData && !('error' in parsedData) && (
+
+                {parsedData && !("error" in parsedData) && (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleCopy}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg ${
-                      copied 
-                      ? 'bg-emerald-500 text-white shadow-emerald-200' 
-                      : 'bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700'
-                    }`}
+                    className={copyButtonClassName(copied)}
                   >
                     {copied ? <Check size={18} /> : <Copy size={18} />}
-                    {copied ? '复制成功' : '一键复制'}
+                    {copied ? "复制成功" : "一键复制"}
                   </motion.button>
                 )}
               </div>
@@ -149,7 +176,7 @@ export default function App() {
               <div className="flex-1 relative">
                 <AnimatePresence mode="wait">
                   {!input.trim() ? (
-                    <motion.div 
+                    <motion.div
                       key="empty"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -161,8 +188,8 @@ export default function App() {
                       </div>
                       <p>等待输入数据...</p>
                     </motion.div>
-                  ) : parsedData && 'error' in parsedData ? (
-                    <motion.div 
+                  ) : parsedData && "error" in parsedData ? (
+                    <motion.div
                       key="error"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -181,22 +208,38 @@ export default function App() {
                     >
                       {/* Visual breakdown for user feedback */}
                       <div className="grid grid-cols-2 gap-3 mb-6 pb-6 border-bottom border-slate-100 border-dashed border-b">
-                         <div className="p-3 bg-blue-50 rounded-lg">
-                            <div className="text-[10px] text-blue-500 font-bold uppercase mb-1 flex items-center gap-1"><Mail size={10}/> 账号</div>
-                            <div className="text-xs font-mono truncate">{parsedData?.account}</div>
-                         </div>
-                         <div className="p-3 bg-purple-50 rounded-lg">
-                            <div className="text-[10px] text-purple-500 font-bold uppercase mb-1 flex items-center gap-1"><Lock size={10}/> 密码</div>
-                            <div className="text-xs font-mono truncate">{parsedData?.password}</div>
-                         </div>
-                         <div className="p-3 bg-amber-50 rounded-lg">
-                            <div className="text-[10px] text-amber-500 font-bold uppercase mb-1 flex items-center gap-1"><Mail size={10}/> 辅助邮箱</div>
-                            <div className="text-xs font-mono truncate">{parsedData?.recovery}</div>
-                         </div>
-                         <div className="p-3 bg-emerald-50 rounded-lg">
-                            <div className="text-[10px] text-emerald-500 font-bold uppercase mb-1 flex items-center gap-1"><Key size={10}/> 2FA密钥</div>
-                            <div className="text-xs font-mono truncate">{parsedData?.twoFA}</div>
-                         </div>
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <div className="text-[10px] text-blue-500 font-bold uppercase mb-1 flex items-center gap-1">
+                            <Mail size={10} /> 账号
+                          </div>
+                          <div className="text-xs font-mono truncate">
+                            {parsedData?.account}
+                          </div>
+                        </div>
+                        <div className="p-3 bg-purple-50 rounded-lg">
+                          <div className="text-[10px] text-purple-500 font-bold uppercase mb-1 flex items-center gap-1">
+                            <Lock size={10} /> 密码
+                          </div>
+                          <div className="text-xs font-mono truncate">
+                            {parsedData?.password}
+                          </div>
+                        </div>
+                        <div className="p-3 bg-amber-50 rounded-lg">
+                          <div className="text-[10px] text-amber-500 font-bold uppercase mb-1 flex items-center gap-1">
+                            <Mail size={10} /> 辅助邮箱
+                          </div>
+                          <div className="text-xs font-mono truncate">
+                            {parsedData?.recovery}
+                          </div>
+                        </div>
+                        <div className="p-3 bg-emerald-50 rounded-lg">
+                          <div className="text-[10px] text-emerald-500 font-bold uppercase mb-1 flex items-center gap-1">
+                            <Key size={10} /> 2FA密钥
+                          </div>
+                          <div className="text-xs font-mono truncate">
+                            {parsedData?.twoFA}
+                          </div>
+                        </div>
                       </div>
 
                       {/* The actual text to be copied */}
@@ -212,7 +255,7 @@ export default function App() {
         </motion.div>
 
         {/* Footer */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
@@ -223,8 +266,12 @@ export default function App() {
               <ShieldAlert size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-amber-900">🛑 必读事项 (重要警告)</h2>
-              <p className="text-sm text-amber-700/70">请务必仔细阅读以下内容，以免造成账号损失</p>
+              <h2 className="text-xl font-bold text-amber-900">
+                🛑 必读事项 (重要警告)
+              </h2>
+              <p className="text-sm text-amber-700/70">
+                请务必仔细阅读以下内容，以免造成账号损失
+              </p>
             </div>
           </div>
 
@@ -255,7 +302,8 @@ export default function App() {
                   <ShieldCheck size={16} /> 养号期 (7-30天)
                 </h3>
                 <p className="text-sm text-amber-700 leading-relaxed">
-                  建议始终使用固定且纯净的IP（推荐美国IP）登录使用，稳定使用 7-30 天后再进行修改密码、绑定手机等敏感操作。
+                  建议始终使用固定且纯净的IP（推荐美国IP）登录使用，稳定使用
+                  7-30 天后再进行修改密码、绑定手机等敏感操作。
                 </p>
               </div>
 
@@ -264,26 +312,48 @@ export default function App() {
                   <Info size={16} /> 安全设置指南
                 </h3>
                 <ul className="text-xs space-y-2 opacity-90">
-                  <li className="flex justify-between"><span>1. 登出陌生设备</span> <span className="font-mono bg-white/20 px-1 rounded">管理设备</span></li>
-                  <li className="flex justify-between"><span>2. 添加辅助邮箱</span> <span className="font-mono bg-white/20 px-1 rounded">设置恢复邮箱</span></li>
-                  <li className="flex justify-between"><span>3. 修改 2FA 设置</span> <span className="font-mono bg-white/20 px-1 rounded">管理验证器</span></li>
-                  <li className="flex justify-between"><span>4. 绑定手机号</span> <span className="font-mono bg-white/20 px-1 rounded">建议长期绑定</span></li>
-                  <li className="flex justify-between font-bold text-amber-300"><span>5. 修改密码</span> <span>⚠️ 最后一步再改</span></li>
+                  <li className="flex justify-between">
+                    <span>1. 登出陌生设备</span>{" "}
+                    <span className="font-mono bg-white/20 px-1 rounded">
+                      管理设备
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>2. 添加辅助邮箱</span>{" "}
+                    <span className="font-mono bg-white/20 px-1 rounded">
+                      设置恢复邮箱
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>3. 修改 2FA 设置</span>{" "}
+                    <span className="font-mono bg-white/20 px-1 rounded">
+                      管理验证器
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>4. 绑定手机号</span>{" "}
+                    <span className="font-mono bg-white/20 px-1 rounded">
+                      建议长期绑定
+                    </span>
+                  </li>
+                  <li className="flex justify-between font-bold text-amber-300">
+                    <span>5. 修改密码</span> <span>⚠️ 最后一步再改</span>
+                  </li>
                 </ul>
               </div>
             </div>
           </div>
-          
+
           <div className="mt-6 pt-6 border-t border-amber-200/30 flex justify-center">
-             <button 
-               onClick={() => {
-                 navigator.clipboard.writeText(MUST_READ_CONTENT);
-                 alert('必读事项已复制');
-               }}
-               className="text-xs font-medium text-amber-700 hover:text-amber-900 flex items-center gap-1 transition-colors"
-             >
-               <Copy size={12} /> 复制纯文本必读事项
-             </button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleMustReadCopy}
+              className={copyButtonClassName(mustReadCopied)}
+            >
+              {mustReadCopied ? <Check size={18} /> : <Copy size={18} />}
+              {mustReadCopied ? "复制成功" : "复制纯文本必读事项"}
+            </motion.button>
           </div>
         </motion.div>
 
